@@ -1,0 +1,48 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+- none
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: 'specific'
+    project: '1df18d74-64d4-4213-8881-494352b46fc3'
+    definition: '4'
+    buildVersionToDownload: 'latest'
+    targetPath: '$(Pipeline.Workspace)'
+
+- task: AzureResourceManagerTemplateDeployment@3
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: 'Azure Connection'
+    subscriptionId: '77aff4c7-761f-4d24-96ee-3e25085c965c'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(resourcegroup)'
+    location: 'Central US'
+    templateLocation: 'Linked artifact'
+    deploymentMode: 'Incremental'
+- task: NodeTool@0
+  inputs:
+    versionSpec: '10.x'
+  displayName: 'Install Node.js'
+
+- script: |
+    npm install
+    npm run build
+  displayName: 'npm install and build'
+
+resources:
+ pipelines:
+  - pipeline: buildContosoAir # identifier for the resource used in pipeline resource variables
+    source: Student1-24152946.ContosoAir # name of the pipeline that produces the artifact
+    trigger:
+     branches:
+      include:
+       - master
